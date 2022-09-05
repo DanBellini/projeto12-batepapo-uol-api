@@ -42,6 +42,7 @@ server.post('/participants', async(req, res)=>{
 
     try {
         const participantFound = await db.collection("participantes").findOne({name: participant.name})
+
         if (participantFound){
             return res.sendStatus(409)
         }
@@ -91,6 +92,7 @@ server.post('/messages', async (req,res)=>{
         else if(type !== "private_message" && type !== "message"){
             return res.sendStatus(422)
         }
+
         else{
             const messagePost = {
                 to: to,
@@ -98,10 +100,12 @@ server.post('/messages', async (req,res)=>{
                 type: type,
                 from: user
             }
+
             const validation = messageSchema.validate(messagePost);
 
             if(validation.error){
                 return res.sendStatus(422);
+
             } else {
                 await db.collection("mensagens").insertOne({
                     ...messagePost,
@@ -109,7 +113,36 @@ server.post('/messages', async (req,res)=>{
                 })
     
                 res.sendStatus(201);
+
         }};
+    } catch (error) {
+        console.log(error)
+    }
+});
+
+server.get('/messages', async (req, res)=>{
+    const user = req.headers.user;
+    const {limit} = req.query;
+    const limitNumber = parseInt(limit)
+    try {
+        const messages = await db.collection("mensagens").find().toArray();
+
+        const messagesFilter = messages.filter(message => {
+            const {from, to, type} = message;
+            const toUser = to === "Todos" || to === user;
+            const fromUser = from === user;
+            const isPublic = type === "message";
+
+            return toUser || fromUser || isPublic
+        })
+
+        if(!limit){
+            return res.send(messagesFilter);
+        }
+        else {
+            const lastedMenssagesForLimit = messagesFilter.slice(-limitNumber)
+            return res.send(lastedMenssagesForLimit)
+        }
     } catch (error) {
         console.log(error)
     }
