@@ -154,7 +154,7 @@ server.get('/messages', async (req, res)=>{
 
 server.post('/status', async (req, res)=>{
     const user = req.headers.user;
-
+    {lastStatus: inativateParticipantTime}
     try {
         const participant = await db.collection("participantes").findOne({name: user});
 
@@ -169,4 +169,31 @@ server.post('/status', async (req, res)=>{
     }
 })
 
+setInterval(async() =>{
+
+    const inativateParticipantTime = Date.now() - 10000;
+
+    try {
+        const participant = await db.collection("participantes").find().toArray();
+
+        const quitparticipant = participant.map(value => {
+            const { lastStatus } = value
+            if (lastStatus < inativateParticipantTime){
+                await db.collection("participantes").insertOne({
+                    ...participant,
+                    processDelete: true
+                });
+                await db.collection("mensagens").insertOne({
+                    from: participant.name, 
+                    to: 'Todos', 
+                    text: 'Sai da sala...', 
+                    type: 'status', 
+                    time: dayjs().format('HH:mm:ss')
+                })
+        }});
+        await db.collection("participantes").deleteMany({processDelete: true})
+    } catch (error) {
+        console.log(error)
+    }
+}, 15000)
 server.listen (5000, () => console.log("listening on port 5000"));
