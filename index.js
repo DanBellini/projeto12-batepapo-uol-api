@@ -153,7 +153,6 @@ server.get('/messages', async (req, res)=>{
 
 server.post('/status', async (req, res)=>{
     const user = req.headers.user;
-    {lastStatus: inativateParticipantTime}
     try {
         const participant = await db.collection("participantes").findOne({name: user});
 
@@ -176,7 +175,7 @@ setInterval(async() =>{
         const participantList = await db.collection("participantes").find().toArray();
 
         for(let i=0;i<participantList.length; i++){
-            if(participantList[i].lastStatus<inativateParticipantTime){
+            if(participantList[i].lastStatus < inativateParticipantTime){
                 await db.collection("participantes").deleteOne({_id: new ObjectId(participantList[i]._id)})
                 await db.collection("mensagens").insertOne({
                                                     from: participantList[i].name, 
