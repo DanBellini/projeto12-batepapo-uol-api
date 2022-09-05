@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { MongoClient } from "mongodb";
+import { MongoClient, ObjectId } from "mongodb";
 import joi from "joi";
 import dayjs from "dayjs";
 import dotenv from "dotenv";
@@ -168,33 +168,27 @@ server.post('/status', async (req, res)=>{
     }
 })
 
-// setInterval(async() =>{
+setInterval(async() =>{
+    
+    const inativateParticipantTime = Date.now() - 10000;
 
-//     const inativateParticipantTime = Date.now() - 10000;
+    try {
+        const participantList = await db.collection("participantes").find().toArray();
 
-//     try {
-//         const participant = await db.collection("participantes").find().toArray();
-
-//         const quitparticipant = participant.map(value => {
-//             const { lastStatus } = value
-//             if (lastStatus < inativateParticipantTime){
-//                 await db.collection("participantes").insertOne({
-//                     ...participant,
-//                     processDelete: true
-//                 });
-//                 await db.collection("mensagens").insertOne({
-//                     from: participant.name, 
-//                     to: 'Todos', 
-//                     text: 'Sai da sala...', 
-//                     type: 'status', 
-//                     time: dayjs().format('HH:mm:ss')
-//                 })
-//         }});
-//         await db.collection("participantes").deleteMany({processDelete: true})
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }, 15000)
+        for(let i=0;i<participantList.length; i++){
+            if(participantList[i].lastStatus<inativateParticipantTime){
+                await db.collection("participantes").deleteOne({_id: new ObjectId(participantList[i]._id)})
+                await db.collection("mensagens").insertOne({
+                                                    from: participantList[i].name, 
+                                                    to: 'Todos', 
+                                                    text: 'Sai da sala...', 
+                                                    type: 'status', 
+                                                    time: dayjs().format('HH:mm:ss')
+        })}}
+        } catch (error) {
+            console.log(error)
+    }
+}, 15000)
 
 
 server.listen (5000, () => console.log("listening on port 5000"));
