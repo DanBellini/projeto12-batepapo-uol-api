@@ -11,8 +11,7 @@ const server = express();
 server.use(cors());
 server.use(express.json());
 
-const mongoClient = new MongoClient("mongodb://localhost:27017/");
-//aparentemente tive problemas com o documento .env, antes de finalizar a entrega tentarei concertar...
+const mongoClient = new MongoClient(process.env.MONGO_URI);
 
 let db;
 
@@ -169,31 +168,33 @@ server.post('/status', async (req, res)=>{
     }
 })
 
-setInterval(async() =>{
+// setInterval(async() =>{
 
-    const inativateParticipantTime = Date.now() - 10000;
+//     const inativateParticipantTime = Date.now() - 10000;
 
-    try {
-        const participant = await db.collection("participantes").find().toArray();
+//     try {
+//         const participant = await db.collection("participantes").find().toArray();
 
-        const quitparticipant = participant.map(value => {
-            const { lastStatus } = value
-            if (lastStatus < inativateParticipantTime){
-                await db.collection("participantes").insertOne({
-                    ...participant,
-                    processDelete: true
-                });
-                await db.collection("mensagens").insertOne({
-                    from: participant.name, 
-                    to: 'Todos', 
-                    text: 'Sai da sala...', 
-                    type: 'status', 
-                    time: dayjs().format('HH:mm:ss')
-                })
-        }});
-        await db.collection("participantes").deleteMany({processDelete: true})
-    } catch (error) {
-        console.log(error)
-    }
-}, 15000)
+//         const quitparticipant = participant.map(value => {
+//             const { lastStatus } = value
+//             if (lastStatus < inativateParticipantTime){
+//                 await db.collection("participantes").insertOne({
+//                     ...participant,
+//                     processDelete: true
+//                 });
+//                 await db.collection("mensagens").insertOne({
+//                     from: participant.name, 
+//                     to: 'Todos', 
+//                     text: 'Sai da sala...', 
+//                     type: 'status', 
+//                     time: dayjs().format('HH:mm:ss')
+//                 })
+//         }});
+//         await db.collection("participantes").deleteMany({processDelete: true})
+//     } catch (error) {
+//         console.log(error)
+//     }
+// }, 15000)
+
+
 server.listen (5000, () => console.log("listening on port 5000"));
