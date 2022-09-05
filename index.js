@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { MongoClient } from "mongodb";
 import joi from "joi";
+import dayjs from "dayjs";
 import dotenv from "dotenv";
 dotenv.config()
 
@@ -39,13 +40,18 @@ server.post('/participants', async(req, res)=>{
             return res.sendStatus(409)
         }
 
-        await db.collection('participants').insertOne({name:participant.name})
+        await db.collection('participants').insertOne({name:participant.name, lastStatus: Date.now() });
+
+        await db.collection('messages').insertOne({
+            from: participant.name, to: 'Todos', text: 'entra na sala...', type: 'status', time: dayjs().format('HH:mm:ss')
+        });
 
         res.sendStatus(201);
+
     } catch (error) {
         console.log(error)
     }
-})
+});
 
 
 server.listen (5000, () => console.log("listening on port 5000"));
