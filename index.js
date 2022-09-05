@@ -137,15 +137,36 @@ server.get('/messages', async (req, res)=>{
         })
 
         if(!limit){
+
             return res.send(messagesFilter);
+
         }
         else {
             const lastedMenssagesForLimit = messagesFilter.slice(-limitNumber)
+
             return res.send(lastedMenssagesForLimit)
+
         }
     } catch (error) {
         console.log(error)
     }
 });
+
+server.post('/status', async (req, res)=>{
+    const user = req.headers.user;
+
+    try {
+        const participant = await db.collection("participantes").findOne({name: user});
+
+        if(!participant){
+            return res.sendStatus(404)
+        }
+
+        await db.collection("participantes").updateOne({name: user}, {$set:{ lastStatus: Date.now() }})
+        res.sendStatus(200)
+    } catch (error) {
+        console.log(error)
+    }
+})
 
 server.listen (5000, () => console.log("listening on port 5000"));
